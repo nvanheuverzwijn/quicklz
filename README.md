@@ -5,9 +5,11 @@ Because why not?
 
 Compiling
 ---------
-gcc -Wall  -O2  -std=c99     -c main.c -o main.o
-gcc -Wall  -O2  -std=c99     -c quicklz.c -o quicklz.o
-g++  -o ./ quicklz.o   -s
+`gcc -Wall  -O2  -std=c99     -c main.c -o main.o`
+
+`gcc -Wall  -O2  -std=c99     -c quicklz.c -o quicklz.o`
+
+`g++  -o ./ quicklz.o   -s`
 
 Quicklz
 -------
