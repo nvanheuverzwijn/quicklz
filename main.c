@@ -10,65 +10,70 @@
 
 bool parseArgv(int argc, char * argv[]);
 
-bool compress = true;
-bool decompress = false;
-
-FILE* input_file;
-FILE* output_file;
+// OPTIONS HERE
+bool compress = true; // default is compressing.
+bool decompress = false; // -d
+bool show_help = false; // -h
+FILE* input_file; // -f
+char* input_file_name; // -f
+FILE* output_file; // -o
+char* output_file_name; // -o
 
 int main(int argc, char* argv[])
 {
-    freopen(NULL, "rb", stdin);
-    freopen(NULL, "rb", stdout);
-
     input_file = stdin;
     output_file = stdout;
-    if(!parseArgv(argc, argv))
-    {
-        printf("FAIL TO PARSE ARGUMENT");
-        exit(1);
-    }
     char *src = 0;
     char *dst = 0;
     size_t input_file_size = 0;
     size_t output_file_size = 0;
+    char inputBuffer[1];
+    size_t bytesRead = 0;
 
-    // allocate source buffer and read file
-    if(input_file != stdin)
+    parseArgv(argc, argv);
+
+    if(show_help)
     {
-        fseek(input_file, 0, SEEK_END);
-        input_file_size = ftell(input_file);
-        fseek(input_file, 0, SEEK_SET);
-        src = (char*) malloc(input_file_size);
-        fread(src, 1, input_file_size, input_file);
+        printf("Quicklz implementation version 1:\n");
+        printf("\n");
+        printf("usage: quicklz [options]:\n");
+        printf("\n");
+        printf("   -f file - input file that will be compress or decompress. This can be stdin.\n");
+        printf("   -h      - show this help message.\n");
+        printf("   -o file - output file. This can be stdout.\n");
+        printf("   -d      - will decompress the file given via stdin or via -f option.\n");
+        printf("\n");
+        printf("Examples:.\n");
+        printf("\n");
+        printf("   cat file.qlz | quicklz -d > file\n");
+        printf("   cat file | quicklz > file.qlz\n");
+        printf("   quicklz -i file -o file.qlz\n");
+        printf("   quicklz -d -i file.qlz -o file\n");
+
+        exit(0);
     }
-    else
-    {
-        unsigned char inputBuffer[1024];
-        size_t bytesRead = 0;
 
-        while ((bytesRead = fread(
-            inputBuffer,            // target buffer
-            sizeof inputBuffer,     // number of bytes in buffer
-            1,                      // number of buffer-sized elements to read
-            input_file)) > 0)
+    do
+    {
+        bytesRead = fread(
+            inputBuffer,
+            1,
+            1,
+            input_file
+        );
+        char *tmp = (char*)realloc(src, input_file_size + bytesRead);
+        if (tmp)
         {
-            char *tmp = (char*)realloc(src, input_file_size + bytesRead);
-            if (tmp)
-            {
-                src = tmp;
-                memmove(&src[input_file_size], inputBuffer, bytesRead);
-                input_file_size += bytesRead;
-            }
-            else
-            {
-                printf("Ran out of memory\n");
-                free(src);
-                exit(1);
-            }
+            src = tmp;
+            memmove(&src[input_file_size], inputBuffer, bytesRead);
+            input_file_size += bytesRead;
         }
-    }
-
+        else
+        {
+            free(src);
+            exit(1);
+        }
+    } while (!feof(input_file));
 
     if(compress)
     {
@@ -96,7 +101,6 @@ int main(int argc, char* argv[])
 
 bool parseArgv(int argc, char * argv[])
 {
-
     for(int i = 0; i < argc; i++)
     {
         if(argv[i][0] == '-')
@@ -106,14 +110,20 @@ bool parseArgv(int argc, char * argv[])
                 decompress = true;
                 compress = false;
             }
-            ȩlse if(i + 1 < argc)
+            else if(argv[i][1] == 'h')
+            {
+                show_help = true;
+            }
+            else if(i + 1 < argc)
             {
                 if(argv[i][1] == 'o')
                 {
+                    output_file_name = argv[i+1];
                     output_file = fopen(argv[i+1], "wb");
                 }
-                else if(argv[i][1] == 'i')
+                else if(argv[i][1] == 'f')
                 {
+                    input_file_name = argv[i+1];
                     input_file = fopen(argv[i+1], "rb");
                 }
             }
